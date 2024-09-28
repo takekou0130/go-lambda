@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"runtime"
+	"io"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
+
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/option"
 )
 
 var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
@@ -29,11 +32,15 @@ func main() {
 func Handler(ctx context.Context, req Request) (Response, error) {
 	fmt.Println("start version function")
 	fmt.Println(req)
-	version := runtime.Version()
-	fmt.Println(version)
 	ssmValue, err := getParameter(ctx)
-	fmt.Println(ssmValue)
-	return Response{ssmValue, time.Now().In(jst)}, err
+	if err != nil {
+		return Response{}, err
+	}
+	fmt.Println(len(ssmValue))
+
+	gcsValue, err := getByGcs(ctx, ssmValue)
+	fmt.Println(gcsValue)
+	return Response{"success", time.Now().In(jst)}, err
 }
 
 func getParameter(ctx context.Context) (string, error) {
@@ -56,4 +63,26 @@ func getParameter(ctx context.Context) (string, error) {
 	}
 
 	return *res.Parameter.Value, nil
+}
+
+func getByGcs(ctx context.Context, credential string) (string, error) {
+	client, err := storage.NewClient(ctx, option.WithCredentialsJSON([]byte(credential)))
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	obj := client.Bucket("takekou-go-lambda-access").Object("sample.txt")
+	reader, err := obj.NewReader(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer reader.Close()
+
+	cont, err := io.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+
+	return string(cont), nil
 }
