@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
 var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
@@ -29,5 +31,29 @@ func Handler(ctx context.Context, req Request) (Response, error) {
 	fmt.Println(req)
 	version := runtime.Version()
 	fmt.Println(version)
-	return Response{version, time.Now().In(jst)}, nil
+	ssmValue, err := getParameter(ctx)
+	fmt.Println(ssmValue)
+	return Response{ssmValue, time.Now().In(jst)}, err
+}
+
+func getParameter(ctx context.Context) (string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	client := ssm.NewFromConfig(cfg)
+	path := "/go-lambda/gcp-key"
+	decrypt := true
+	params := &ssm.GetParameterInput{
+		Name:           &path,
+		WithDecryption: &decrypt,
+	}
+
+	res, err := client.GetParameter(ctx, params)
+	if err != nil {
+		return "", err
+	}
+
+	return *res.Parameter.Value, nil
 }
