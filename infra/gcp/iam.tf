@@ -5,6 +5,7 @@ resource "google_service_account" "gcs_access" {
   description  = "used by AWS lambda to allow access to GCS"
 }
 
+# to gcs from service account (bigQueryの権限はフローで申請するのでこれはいらないはず)
 resource "google_storage_bucket_iam_member" "gcs_access" {
   bucket = google_storage_bucket.bucket.name
   role   = "roles/storage.objectViewer"

@@ -51,11 +51,7 @@ func getParameter(ctx context.Context) (string, error) {
 
 	client := ssm.NewFromConfig(cfg)
 	path := "/go-lambda/gcp-key"
-	decrypt := true
-	params := &ssm.GetParameterInput{
-		Name:           &path,
-		WithDecryption: &decrypt,
-	}
+	params := &ssm.GetParameterInput{Name: &path}
 
 	res, err := client.GetParameter(ctx, params)
 	if err != nil {
