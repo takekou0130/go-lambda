@@ -31,6 +31,7 @@ func main() {
 
 func Handler(ctx context.Context, req Request) (Response, error) {
 	fmt.Println("start version function")
+	fmt.Println("this is v2")
 	fmt.Println(req)
 	ssmValue, err := getParameter(ctx)
 	if err != nil {
