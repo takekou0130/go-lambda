@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "go_lambda" {
   function_name = "takekou-go-lambda"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.go_lambda.repository_url}:latest"
+  image_uri     = "${aws_ecr_repository.go_lambda.repository_url}:${var.image_tag}"
   role          = aws_iam_role.lambda.arn
   publish       = true
   architectures = ["arm64"]
@@ -17,10 +17,6 @@ resource "aws_lambda_function" "go_lambda" {
 
   image_config {
     entry_point = ["/functions/version"]
-  }
-
-  lifecycle {
-    ignore_changes = [image_uri]
   }
 }
 
